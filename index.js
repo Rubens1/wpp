@@ -3,6 +3,8 @@ const fs = require('fs');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+const cors = require('cors');
+
 const genAI = new GoogleGenerativeAI("AIzaSyC-JrHaqiHunKf4EPwLGi_LyjTUAbnguXQ");
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
@@ -32,7 +34,7 @@ const mainGoogle = async (texto) => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
+app.use(cors());
 
 app.post('/check-ai', async (req, res) => {
   try {
@@ -58,6 +60,8 @@ app.post('/qrcode', async (req, res) => {
     // Verifica se o parâmetro useAI está presente e é verdadeiro
     const useAI = req.body.useAI === true;
 
+    console.log(req.body);
+    
     if (useAI) {
       const responseFromAI = await mainGoogle(req.body.texto);
       console.log(responseFromAI);
