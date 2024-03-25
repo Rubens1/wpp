@@ -89,6 +89,17 @@ app.post('/qrcode', async (req, res) => {
       });
     } else {
       // Se não estiver usando a AI, apenas retorne uma mensagem de sucesso
+      wppconnect.create({
+        session: 'sessionName',
+        catchQR: async (base64Qr, asciiQR) => {
+          console.log(asciiQR);
+          // Enviar apenas o código QR para o cliente
+          res.status(200).json({ success: true, qrCode: base64Qr });
+        },
+        logQR: false,
+      }).then((client) => {
+        start(client)
+      });
       res.status(200).json({ success: true, message: 'Not using AI.' });
     }
   } catch (error) {
