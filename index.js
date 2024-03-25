@@ -29,8 +29,6 @@ const mainGoogle = async (texto) => {
   }
 };
 
-
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -55,31 +53,47 @@ app.post('/check-ai', async (req, res) => {
   }
 });
 
-
-app.get('/qrcode', async (req, res) => {
+app.post('/qrcode', async (req, res) => {
   try {
     // Verifica se o parâmetro useAI está presente e é verdadeiro
-    const useAI = req.query.useAI === 'true';
+    const useAI = req.body.useAI === true;
 
-    // Chamada para a função mainGoogle para obter a resposta da AI, se necessário
-    let responseFromAI = '';
     if (useAI) {
-      responseFromAI = await mainGoogle(req.query.assunto);
-    }
+      const responseFromAI = await mainGoogle(req.body.texto);
+      console.log(responseFromAI);
 
-    console.log(responseFromAI);
-    // Gerar o código QR
-    wppconnect.create({
-      session: 'sessionName',
-      catchQR: (base64Qr, asciiQR) => {
-        console.log(asciiQR);
-        res.status(200).json({ qrCode: base64Qr, responseFromAI });
-      },
-      logQR: false,
-    }).then((client) => start(client));
+      wppconnect.create({
+        session: 'sessionName',
+        catchQR: async (base64Qr, asciiQR) => {
+          console.log(asciiQR);
+          // Enviar resposta da AI e código QR para o cliente
+          res.status(200).json({ success: true, message: responseFromAI, qrCode: base64Qr });
+        },
+        logQR: false,
+      }).then((client) => {
+        client.onMessage((message) => {
+          console.log('Received message:', message);
+          // Verificar se a mensagem recebida deve ser respondida pela AI
+          const shouldRespondWithAI = true; // Implemente a lógica necessária para determinar isso
+  
+          if (shouldRespondWithAI) {
+            // Chamar a função mainGoogle para obter a resposta da AI
+            mainGoogle(message.body).then((response) => {
+              // Enviar a resposta da AI de volta para o remetente
+              client.sendText(message.from, response);
+            }).catch((error) => {
+              console.error("Erro ao responder com AI:", error);
+            });
+          }
+        });
+      });
+    } else {
+      // Se não estiver usando a AI, apenas retorne uma mensagem de sucesso
+      res.status(200).json({ success: true, message: 'Not using AI.' });
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to generate QR code or get response from AI.' });
+    res.status(500).json({ success: false, error: 'Failed to generate QR code or get response from AI.' });
   }
 });
 
@@ -98,6 +112,8 @@ app.post('/send-message', (req, res) => {
       res.status(500).json({ success: false, error: 'Failed to send message.' });
     });
 });
+
+
 
 function start(client) {
   client.onMessage((message) => {
