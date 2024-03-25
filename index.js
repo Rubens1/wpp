@@ -35,6 +35,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+app.use(express.json());
 
 app.post('/check-ai', async (req, res) => {
   try {
@@ -60,8 +61,6 @@ app.post('/qrcode', async (req, res) => {
     // Verifica se o parâmetro useAI está presente e é verdadeiro
     const useAI = req.body.useAI === true;
 
-    console.log(req.body);
-    
     if (useAI) {
       const responseFromAI = await mainGoogle(req.body.texto);
       console.log(responseFromAI);
