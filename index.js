@@ -109,58 +109,6 @@ app.post('/send-message', (req, res) => {
     });
 });
 
-// Rota para listar as conversas
-app.get('/conversations', async (req, res) => {
-  try {
-    let conversations = {};
-
-    // Função para processar mensagens recebidas e armazená-las nas conversas
-    function processReceivedMessage(message) {
-      console.log('Mensagem recebida:', message);
-      const senderNumber = message.from;
-      if (!conversations[senderNumber]) {
-        conversations[senderNumber] = {
-          from: message.from,
-          messages: [],
-          timestamp: new Date().toISOString()
-        };
-      }
-      conversations[senderNumber].messages.push({
-        text: message.body,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Criar uma nova sessão e começar a ouvir mensagens
-    const client = await wppconnect.create({
-      session: 'sessionName',
-      catchQR: (base64Qr, asciiQR) => {
-        console.log('QR Code recebido:', asciiQR);
-      },
-      logQR: false,
-    });
-
-    // Monitorar o estado da conexão do cliente
-    client.onStateChanged(state => {
-      console.log('Estado da conexão:', state);
-      if (state === 'CONNECTED') {
-        // Cliente conectado, começar a processar as mensagens
-        client.onMessage(processReceivedMessage);
-      }
-    });
-
-    // Aguardar até que as mensagens sejam processadas
-    await new Promise(resolve => setTimeout(resolve, 5000)); // Aguardar 5 segundos
-
-    // Retornar as conversas como resposta
-    res.status(200).json({ success: true, conversations: Object.values(conversations) });
-  } catch (error) {
-    console.error('Erro ao listar conversas:', error);
-    res.status(500).json({ success: false, error: 'Erro ao listar conversas.' });
-  }
-});
-
-
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
