@@ -51,8 +51,8 @@ app.post('/check-ai', async (req, res) => {
       res.status(500).json({ success: false, error: 'Falha ao receber resposta da AI.' });
     }
   } catch (error) {
-    console.error('Erro ao verificar AI:', error);
-    res.status(500).json({ success: false, error: 'Erro ao verificar AI.', detailedError: error });
+    console.error('Error ao verificar AI:', error);
+    res.status(500).json({ success: false, error: 'Error ao verificar AI.', detailedError: error });
   }
 });
 
@@ -68,7 +68,7 @@ app.post('/qrcode', async (req, res) => {
 
           qrCodeResponse = { success: true, message: responseFromAI };
       } else {
-          qrCodeResponse = { success: true, message: 'Not using AI.' };
+          qrCodeResponse = { success: true, message: 'Não esta sendo usado AI.' };
       }
 
       wppconnect.create({
@@ -88,7 +88,7 @@ app.post('/qrcode', async (req, res) => {
       });
   } catch (error) {
       console.error(error);
-      res.status(500).json({ success: false, error: 'Failed to generate QR code or get response from AI.' });
+      res.status(500).json({ success: false, error: 'Falha ao gerar o código QR ou obter resposta da IA.' });
   }
 });
 
@@ -100,16 +100,16 @@ app.post('/send-message', (req, res) => {
   wppconnect
     .sendText(to, message)
     .then((result) => {
-      console.log('Message sent successfully:', result);
-      res.status(200).json({ success: true, message: 'Message sent successfully.' });
+      console.log('Mensagem enviada com sucesso: ', result);
+      res.status(200).json({ success: true, message: 'Mensagem enviado com sucesso.' });
     })
     .catch((error) => {
-      console.error('Error when sending message:', error);
-      res.status(500).json({ success: false, error: 'Failed to send message.' });
+      console.error('Error ao enviar a mensagem:', error);
+      res.status(500).json({ success: false, error: 'Falha ao enviar a mensagem.' });
     });
 });
 
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`Servidor escutando na porta ${PORT}`);
 });
