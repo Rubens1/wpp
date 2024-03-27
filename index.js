@@ -109,6 +109,10 @@ app.post('/send-message', (req, res) => {
     });
 });
 
+app.get('/conversations', (req, res) => {
+  const { body } = req;
+  
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor escutando na porta ${PORT}`);
