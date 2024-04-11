@@ -58,37 +58,52 @@ app.post('/check-ai', async (req, res) => {
 
 app.post('/qrcode', async (req, res) => {
   try {
-      // Verifica se o parâmetro useAI está presente e é verdadeiro
-      const useAI = req.body.useAI === true;
+    // Verifica se o parâmetro useAI está presente e é verdadeiro
+    const useAI = req.body.useAI === true;
 
-      let qrCodeResponse;
+    let qrCodeResponse;
 
-      if (useAI) {
-          const responseFromAI = await mainGoogle(req.body.texto);
+    if (useAI) {
+      const responseFromAI = await mainGoogle(req.body.texto);
 
-          qrCodeResponse = { success: true, message: responseFromAI };
-      } else {
-          qrCodeResponse = { success: true, message: 'Não esta sendo usado AI.' };
-      }
+      qrCodeResponse = { success: true, message: responseFromAI };
+    } else {
+      qrCodeResponse = { success: true, message: 'Não está sendo usado AI.' };
+    }
 
-      wppconnect.create({
-          session: 'sales', // sales || support
-          catchQR: async (base64Qr, asciiQR) => {
-              console.log(asciiQR);
-              // Enviar código QR para o cliente
-              qrCodeResponse.qrCode = base64Qr;
-              res.status(200).json(qrCodeResponse);
-          },
-          logQR: false,
-      }).then((client) => {
-          // Se não estiver usando a AI, definir um manipulador vazio de mensagens
-          if (!useAI) {
-              client.onMessage(() => {});
-          }
+    // Cria o cliente do WhatsApp Connect
+    const client = await wppconnect.create({
+      session: 'sales', // sales || support
+      catchQR: async (base64Qr, asciiQR) => {
+        console.log(asciiQR);
+        // Enviar código QR para o cliente
+        qrCodeResponse.qrCode = base64Qr;
+        res.status(200).json(qrCodeResponse);
+      },
+      logQR: false,
+    });
+
+    // Se não estiver usando a IA, definir um manipulador vazio de mensagens
+    if (!useAI) {
+      client.onMessage(() => {});
+    } else {
+      // Configurar a resposta da IA às mensagens recebidas
+      client.onMessage(async (message) => {
+        // Verifica se a mensagem recebida não foi enviada pela própria IA
+        if (message.fromMe) {
+          return;
+        }
+
+        // Enviar a mensagem recebida para a IA e obter a resposta
+        const responseFromAI = await mainGoogle(message.body);
+
+        // Enviar a resposta da IA de volta para o remetente original
+        await client.sendText(message.from, responseFromAI);
       });
+    }
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: 'Falha ao gerar o código QR ou obter resposta da IA.' });
+    console.error(error);
+    res.status(500).json({ success: false, error: 'Falha ao gerar o código QR ou obter resposta da IA.' });
   }
 });
 
