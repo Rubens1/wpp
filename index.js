@@ -90,7 +90,7 @@ app.post('/qrcode', async (req, res) => {
       // Configurar a resposta da IA às mensagens recebidas
       client.onMessage(async (message) => {
         // Verifica se a mensagem recebida não foi enviada pela própria IA
-        if (message.fromMe) {
+        if (message.fromMe || message.isGroupMsg) {
           return;
         }
 
