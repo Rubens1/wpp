@@ -5,7 +5,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const cors = require('cors');
 
-const genAI = new GoogleGenerativeAI("");
+const genAI = new GoogleGenerativeAI("AIzaSyC-JrHaqiHunKf4EPwLGi_LyjTUAbnguXQ");
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 const mainGoogle = async (texto) => {
