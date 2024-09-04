@@ -11,7 +11,7 @@ const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 const mainGoogle = async (texto) => {
   try {
     const userMessage = { role: "user", parts: [{ text: texto }] };
-    const modelResponse = { role: "model", parts: [{ text: "Olá, certo!" }] };
+    const modelResponse = { role: "model", parts: [{ text: "Olá, certo! " }] };
     
     const chat = model.startChat({
       history: [userMessage, modelResponse],
@@ -25,8 +25,9 @@ const mainGoogle = async (texto) => {
     const text = response.text();
 
     return text;
+
   } catch (error) {
-    console.error("Erro ao iniciar a conversa com a AI:", error);
+    console.error("Erro ao iniciar a conversa com a AI: ", error);
     throw error;
   }
 };
@@ -125,10 +126,13 @@ app.post('/send-message', (req, res) => {
 });
 
 app.get('/conversations', (req, res) => {
+
   const { body } = req;
   
 });
 
 app.listen(PORT, () => {
+
   console.log(`Servidor escutando na porta ${PORT}`);
+
 });
