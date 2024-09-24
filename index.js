@@ -45,21 +45,15 @@ app.post('/check-ai', async (req, res) => {
 
     // Se a resposta da AI for recebida com sucesso, enviar uma resposta de sucesso
     if (responseFromAI) {
-
       console.log('AI está conectada e funcionando.');
       res.status(200).json({ success: true, message: 'AI está conectada e funcionando.' });
-
     } else {
-
       console.error('Falha ao receber resposta da AI.');
       res.status(500).json({ success: false, error: 'Falha ao receber resposta da AI.' });
-
     }
   } catch (error) {
-
     console.error('Error ao verificar AI:', error);
     res.status(500).json({ success: false, error: 'Error ao verificar AI.', detailedError: error });
-    
   }
 });
 
@@ -113,7 +107,6 @@ app.post('/qrcode', async (req, res) => {
     res.status(500).json({ success: false, error: 'Falha ao gerar o código QR ou obter resposta da IA.' });
   }
 });
-
 
 app.post('/send-message', (req, res) => {
   const { body } = req;
