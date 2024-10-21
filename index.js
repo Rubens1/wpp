@@ -65,16 +65,8 @@ app.post('/check-ai', async (req, res) => {
 app.post('/qrcode', async (req, res) => {
   try {
     const useAI = req.body.useAI === true;
-    let qrCodeResponse;
 
-    if (useAI) {
-      const responseFromAI = await mainGoogle(req.body.texto);
-      qrCodeResponse = { success: true, message: responseFromAI };
-    } else {
-      qrCodeResponse = { success: true, message: 'Não está sendo usado AI.' };
-    }
-
-    // Cria o cliente do WhatsApp Connect apenas uma vez
+    // Se não usar a IA, apenas verifica a conexão
     if (!clientInstance) {
       clientInstance = await wppconnect.create({
         session: 'sales', 
@@ -82,8 +74,7 @@ app.post('/qrcode', async (req, res) => {
           console.log(asciiQR);
           
           if (!res.headersSent) {
-            qrCodeResponse.qrCode = base64Qr;
-            res.status(200).json(qrCodeResponse);
+            res.status(200).json({ success: true, qrCode: base64Qr });
           }
         },
         logQR: false,
@@ -96,9 +87,11 @@ app.post('/qrcode', async (req, res) => {
         const responseFromAI = await mainGoogle(message.body);
         await clientInstance.sendText(message.from, responseFromAI);
       });
+       return res.status(200).json({ success: true, message: 'Sessão já ativa.' });
     } else {
       console.log('Sessão já criada.');
-      res.status(200).json({ success: true, message: 'Sessão já ativa.' });
+      // Retorna uma mensagem informando que a sessão já está ativa
+      return res.status(200).json({ success: true, message: 'Sessão já ativa.' });
     }
   } catch (error) {
     console.error(error);
@@ -108,6 +101,7 @@ app.post('/qrcode', async (req, res) => {
     }
   }
 });
+
 
 app.post('/send-message', async (req, res) => {
   const { to, message } = req.body;
