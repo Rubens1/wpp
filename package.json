@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +15,7 @@
     "@wppconnect-team/wppconnect": "^1.30.1",
     "cors": "^2.8.5",
     "express": "^4.19.1",
+    "nodemon": "^3.1.7",
     "openai": "^4.29.2",
     "sharp": "^0.33.3"
   }

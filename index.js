@@ -40,6 +40,10 @@ app.use(express.json());
 
 let clientInstance = null; // Armazenar o cliente da sessão
 
+function formatPhoneNumber(number) {
+  return number.replace(/\D/g, ''); // Remove caracteres não numéricos
+}
+
 app.post('/check-ai', async (req, res) => {
   try {
     const responseFromAI = await mainGoogle(req.body.texto);
@@ -123,9 +127,25 @@ app.post('/send-message', async (req, res) => {
 
     // Envia a mensagem usando o cliente existente
     const result = await clientInstance.sendText(formattedNumber, message);
-
     console.log('Mensagem enviada com sucesso:', result);
-    res.status(200).json({ success: true, message: 'Mensagem enviada com sucesso.' });
+
+    // Obtém todas as mensagens da conversa após o envio da mensagem
+    const messages = await clientInstance.getAllMessagesInChat(formattedNumber, true, false);
+
+    // Formata as mensagens para serem incluídas na resposta
+    const formattedMessages = messages.map(msg => ({
+      from: msg.from,
+      to: msg.to,
+      body: msg.body,
+      timestamp: msg.t,
+      type: msg.type
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Mensagem enviada com sucesso.',
+      chatHistory: formattedMessages // Retorna o histórico de mensagens
+    });
   } catch (error) {
     console.error('Erro ao enviar a mensagem:', error);
     res.status(500).json({ success: false, error: 'Falha ao enviar a mensagem.' });
@@ -133,14 +153,82 @@ app.post('/send-message', async (req, res) => {
 });
 
 
-function formatPhoneNumber(number) {
-  return number.replace(/\D/g, ''); // Remove caracteres não numéricos
-}
+app.get('/conversas', async (req, res) => {
+  try {
+    // Verifica se o cliente está disponível
+    if (!clientInstance) {
+      return res.status(500).json({ success: false, error: 'Sessão do WhatsApp não iniciada.' });
+    }
 
-app.get('/conversations', (req, res) => {
-  const { body } = req;
-  // Implementar a lógica para obter conversas, se necessário
+    // Obtém todas as conversas (chats)
+    const chats = await clientInstance.getAllChats();
+
+    // Formata as conversas para retornar apenas os dados mais importantes
+    const formattedChats = chats.map(chat => ({
+      id: chat.id._serialized,
+      name: chat.name || chat.contact.pushname || chat.contact.name || 'Sem nome',
+      isGroup: chat.isGroup,
+      unreadCount: chat.unreadCount,
+    }));
+
+    // Retorna a lista de conversas
+    res.status(200).json({ success: true, conversations: formattedChats });
+  } catch (error) {
+    console.error('Erro ao listar conversas:', error);
+    res.status(500).json({ success: false, error: 'Falha ao listar conversas.' });
+  }
 });
+
+app.get('/conversa/:id', async (req, res) => {
+  const chatId = req.params.id; // ID da conversa (telefone do contato ou grupo)
+
+  try {
+    // Verifica se o cliente está disponível
+    if (!clientInstance) {
+      return res.status(500).json({ success: false, error: 'Sessão do WhatsApp não iniciada.' });
+    }
+
+    // Obtém detalhes da conversa pelo ID
+    const chat = await clientInstance.getChatById(chatId);
+    
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Conversa não encontrada.' });
+    }
+
+    // Obtém todas as mensagens da conversa
+    console.log(`Buscando mensagens para o chat ID: ${chatId}`);
+    
+    const messages = await clientInstance.getAllMessagesInChat(chatId, true); // Chamada única
+    console.log('Mensagens obtidas:', messages);
+
+    // Verifica se há mensagens
+    if (!messages || messages.length === 0) {
+      return res.status(200).json({ success: true, conversation: { messages: [] } });
+    }
+
+    // Formata a resposta com os detalhes da conversa e as mensagens
+    const conversationDetails = {
+      id: chat.id._serialized,
+      name: chat.name || chat.contact.pushname || chat.contact.name || 'Sem nome',
+      isGroup: chat.isGroup,
+      participants: chat.isGroup ? chat.groupMetadata.participants : null,
+      messages: messages.map(message => ({
+        id: message.id._serialized,
+        from: message.from,
+        body: message.body,
+        timestamp: message.t,
+        type: message.type
+      })),
+    };
+
+    // Retorna os detalhes da conversa e as mensagens
+    res.status(200).json({ success: true, conversation: conversationDetails });
+  } catch (error) {
+    console.error('Erro ao obter detalhes da conversa:', error);
+    res.status(500).json({ success: false, error: 'Falha ao obter detalhes da conversa.' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Servidor escutando na porta ${PORT}`);
